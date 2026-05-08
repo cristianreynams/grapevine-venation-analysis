@@ -20,7 +20,6 @@ data/raw/*
 data/processed/*
 
 # Keep folder structure
-!outputs/debug/
 !outputs/figures/
 
 !data/raw/.gitkeep
