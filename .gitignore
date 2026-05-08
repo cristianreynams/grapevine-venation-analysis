@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# VS Code
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+.venv/
+
+# Outputs
+outputs/*
+
+# Data
+data/raw/*
+data/processed/*
+
+# Keep folder structure
+!outputs/debug/
+!outputs/figures/
+
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+
+# Logs
+*.log
