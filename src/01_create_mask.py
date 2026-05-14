@@ -12,7 +12,7 @@ from scipy.ndimage import binary_fill_holes
 INPUT_ROOT = "data/processed/cropped"
 
 # More restrictive than ROI crop
-LOWER_GREEN = np.array([18, 38, 23])
+LOWER_GREEN = np.array([18, 30, 30])
 UPPER_GREEN = np.array([110, 255, 255])
 
 # Smaller kernel for finer edges
@@ -64,6 +64,8 @@ def create_mask(image_path):
         UPPER_GREEN
     )
 
+    mask = cv2.medianBlur(mask, 3)
+
     # =====================================
     # MORPHOLOGY
     # =====================================
@@ -85,13 +87,23 @@ def create_mask(image_path):
         kernel_close
     )
 
-    # Remove small external noise
-    mask = cv2.morphologyEx(
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
         mask,
-        cv2.MORPH_OPEN,
-        kernel_open
+        connectivity=8
     )
 
+    clean_mask = np.zeros_like(mask)
+
+    MIN_AREA = 500
+
+    for i in range(1, num_labels):
+
+        area = stats[i, cv2.CC_STAT_AREA]
+
+        if area >= MIN_AREA:
+            clean_mask[labels == i] = 255
+
+    mask = clean_mask
     # =====================================
     # LARGEST CONNECTED COMPONENT
     # =====================================
@@ -113,9 +125,22 @@ def create_mask(image_path):
 
     final_mask = labels == largest_label
 
-    final_mask = binary_fill_holes(
-        final_mask
+    inv_mask = (final_mask == 0).astype(np.uint8)
+
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        inv_mask,
+        connectivity=8
     )
+
+    MAX_HOLE_AREA = 150
+
+    for i in range(1, num_labels):
+
+        area = stats[i, cv2.CC_STAT_AREA]
+
+        if area < MAX_HOLE_AREA:
+
+            final_mask[labels == i] = True
 
     final_mask = np.uint8(final_mask) * 255
 
