@@ -3,6 +3,7 @@ import os
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import binary_fill_holes
 
 # =====================================
 # CONFIG
@@ -33,13 +34,14 @@ def create_mask(image_path):
         raise ValueError(f"Could not load {image_path}")
 
     # =====================================
-    # GAUSSIAN BLUR
+    # BLUR
     # =====================================
 
-    blur = cv2.GaussianBlur(
+    blur = cv2.bilateralFilter(
         img,
-        (5, 5),
-        0
+        d=7,
+        sigmaColor=50,
+        sigmaSpace=50
     )
 
     # =====================================
@@ -68,7 +70,7 @@ def create_mask(image_path):
 
     kernel_close = cv2.getStructuringElement(
         cv2.MORPH_ELLIPSE,
-        (11,11)
+        (5,5) # Smaller kernel
     )
 
     kernel_open = cv2.getStructuringElement(
@@ -109,21 +111,15 @@ def create_mask(image_path):
         stats[1:, cv2.CC_STAT_AREA]
     )
 
-    final_mask = np.uint8(
-        labels == largest_label
-    ) * 255
+    final_mask = labels == largest_label
 
-    kernel_dilate = cv2.getStructuringElement(
-        cv2.MORPH_ELLIPSE,
-        (3,3)
+    final_mask = binary_fill_holes(
+        final_mask
     )
 
-    final_mask = cv2.dilate(
-        final_mask,
-        kernel_dilate,
-        iterations=1
-    )
+    final_mask = np.uint8(final_mask) * 255
 
+    
     return {
         "original": img,
         "mask": final_mask
